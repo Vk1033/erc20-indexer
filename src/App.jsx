@@ -1,22 +1,26 @@
-import { Box, Button, Center, Flex, Heading, Image, Input, SimpleGrid, Text } from "@chakra-ui/react";
+import { Box, Button, Center, Flex, Heading, Image, Input, SimpleGrid, Text, CircularProgress } from "@chakra-ui/react";
 import { Alchemy, Network, Utils } from "alchemy-sdk";
 import { useState } from "react";
 import { ethers } from "ethers";
 
 function App() {
+  const [isLoading, setIsLoading] = useState(false);
   const [userAddress, setUserAddress] = useState("");
   const [results, setResults] = useState([]);
   const [hasQueried, setHasQueried] = useState(false);
   const [tokenDataObjects, setTokenDataObjects] = useState([]);
 
   async function getWalletTokens() {
+    setIsLoading(true);
     if (!window.ethereum.selectedAddress) {
       await window.ethereum.request({ method: "eth_requestAccounts" });
     }
     getTokenBalance(window.ethereum.selectedAddress);
   }
 
-  async function getTokenBalance(queryAddress = userAddress) {
+  async function getTokenBalance(_, queryAddress = userAddress) {
+    console.log("queryAddress", queryAddress);
+    setIsLoading(true);
     const config = {
       apiKey: import.meta.env.VITE_ALCHEMY_API_KEY,
       network: Network.ETH_SEPOLIA,
@@ -36,6 +40,7 @@ function App() {
 
     setTokenDataObjects(await Promise.all(tokenDataPromises));
     setHasQueried(true);
+    setIsLoading(false);
   }
   return (
     <Box w="100vw">
@@ -76,8 +81,10 @@ function App() {
               );
             })}
           </SimpleGrid>
+        ) : isLoading ? (
+          <CircularProgress isIndeterminate />
         ) : (
-          "Please make a query! This may take a few seconds..."
+          "this is where the results will be displayed"
         )}
       </Flex>
     </Box>
