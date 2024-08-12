@@ -1,40 +1,36 @@
-import {
-  Box,
-  Button,
-  Center,
-  Flex,
-  Heading,
-  Image,
-  Input,
-  SimpleGrid,
-  Text,
-} from '@chakra-ui/react';
-import { Alchemy, Network, Utils } from 'alchemy-sdk';
-import { useState } from 'react';
+import { Box, Button, Center, Flex, Heading, Image, Input, SimpleGrid, Text } from "@chakra-ui/react";
+import { Alchemy, Network, Utils } from "alchemy-sdk";
+import { useState } from "react";
+import { ethers } from "ethers";
 
 function App() {
-  const [userAddress, setUserAddress] = useState('');
+  const [userAddress, setUserAddress] = useState("");
   const [results, setResults] = useState([]);
   const [hasQueried, setHasQueried] = useState(false);
   const [tokenDataObjects, setTokenDataObjects] = useState([]);
 
-  async function getTokenBalance() {
+  async function getWalletTokens() {
+    if (!window.ethereum.selectedAddress) {
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+    }
+    getTokenBalance(window.ethereum.selectedAddress);
+  }
+
+  async function getTokenBalance(queryAddress = userAddress) {
     const config = {
-      apiKey: '<-- COPY-PASTE YOUR ALCHEMY API KEY HERE -->',
-      network: Network.ETH_MAINNET,
+      apiKey: import.meta.env.VITE_ALCHEMY_API_KEY,
+      network: Network.ETH_SEPOLIA,
     };
 
     const alchemy = new Alchemy(config);
-    const data = await alchemy.core.getTokenBalances(userAddress);
+    const data = await alchemy.core.getTokenBalances(queryAddress);
 
     setResults(data);
 
     const tokenDataPromises = [];
 
     for (let i = 0; i < data.tokenBalances.length; i++) {
-      const tokenData = alchemy.core.getTokenMetadata(
-        data.tokenBalances[i].contractAddress
-      );
+      const tokenData = alchemy.core.getTokenMetadata(data.tokenBalances[i].contractAddress);
       tokenDataPromises.push(tokenData);
     }
 
@@ -44,64 +40,36 @@ function App() {
   return (
     <Box w="100vw">
       <Center>
-        <Flex
-          alignItems={'center'}
-          justifyContent="center"
-          flexDirection={'column'}
-        >
+        <Flex alignItems={"center"} justifyContent="center" flexDirection={"column"}>
           <Heading mb={0} fontSize={36}>
             ERC-20 Token Indexer
           </Heading>
-          <Text>
-            Plug in an address and this website will return all of its ERC-20
-            token balances!
-          </Text>
+          <Text>Plug in an address and this website will return all of its ERC-20 token balances!</Text>
         </Flex>
       </Center>
-      <Flex
-        w="100%"
-        flexDirection="column"
-        alignItems="center"
-        justifyContent={'center'}
-      >
-        <Heading mt={42}>
-          Get all the ERC-20 token balances of this address:
-        </Heading>
-        <Input
-          onChange={(e) => setUserAddress(e.target.value)}
-          color="black"
-          w="600px"
-          textAlign="center"
-          p={4}
-          bgColor="white"
-          fontSize={24}
-        />
+      <Flex w="100%" flexDirection="column" alignItems="center" justifyContent={"center"}>
+        <Heading mt={42}>Get all the ERC-20 token balances of this address:</Heading>
+        <Input onChange={(e) => setUserAddress(e.target.value)} color="black" w="600px" textAlign="center" p={4} bgColor="white" fontSize={24} />
         <Button fontSize={20} onClick={getTokenBalance} mt={36} bgColor="blue">
           Check ERC-20 Token Balances
+        </Button>
+        <Button fontSize={20} onClick={getWalletTokens} mt={36} bgColor="blue">
+          Check Wallet ERC-20 Token Balances
         </Button>
 
         <Heading my={36}>ERC-20 token balances:</Heading>
 
         {hasQueried ? (
-          <SimpleGrid w={'90vw'} columns={4} spacing={24}>
+          <SimpleGrid w={"90vw"} columns={4} spacing={24}>
             {results.tokenBalances.map((e, i) => {
               return (
-                <Flex
-                  flexDir={'column'}
-                  color="white"
-                  bg="blue"
-                  w={'20vw'}
-                  key={e.id}
-                >
+                <Flex flexDir={"column"} color="white" bg="blue" w={"20vw"} key={i}>
                   <Box>
                     <b>Symbol:</b> ${tokenDataObjects[i].symbol}&nbsp;
                   </Box>
                   <Box>
                     <b>Balance:</b>&nbsp;
-                    {Utils.formatUnits(
-                      e.tokenBalance,
-                      tokenDataObjects[i].decimals
-                    )}
+                    {Utils.formatUnits(e.tokenBalance, tokenDataObjects[i].decimals)}
                   </Box>
                   <Image src={tokenDataObjects[i].logo} />
                 </Flex>
@@ -109,7 +77,7 @@ function App() {
             })}
           </SimpleGrid>
         ) : (
-          'Please make a query! This may take a few seconds...'
+          "Please make a query! This may take a few seconds..."
         )}
       </Flex>
     </Box>
