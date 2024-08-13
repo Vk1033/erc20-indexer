@@ -9,6 +9,7 @@ function App() {
   const [results, setResults] = useState([]);
   const [hasQueried, setHasQueried] = useState(false);
   const [tokenDataObjects, setTokenDataObjects] = useState([]);
+  const [ifError, setIfError] = useState(false);
 
   async function getWalletTokens() {
     setIsLoading(true);
@@ -26,8 +27,16 @@ function App() {
       network: Network.ETH_MAINNET,
     };
 
+    let data;
     const alchemy = new Alchemy(config);
-    const data = await alchemy.core.getTokenBalances(queryAddress);
+    try {
+      data = await alchemy.core.getTokenBalances(queryAddress);
+    } catch (e) {
+      console.error(e);
+      setIfError(true);
+      setIsLoading(false);
+      return;
+    }
 
     setResults(data);
 
@@ -55,6 +64,11 @@ function App() {
       <Flex w="100%" flexDirection="column" alignItems="center" justifyContent={"center"}>
         <Heading mt={42}>Get all the ERC-20 token balances of this address:</Heading>
         <Input onChange={(e) => setUserAddress(e.target.value)} color="black" w="600px" textAlign="center" p={4} bgColor="white" fontSize={24} />
+        {ifError && (
+          <Text fontSize={15} color="red">
+            There was an error
+          </Text>
+        )}
         <Button fontSize={20} onClick={getTokenBalance} mt={36} bgColor="blue">
           Check ERC-20 Token Balances
         </Button>
