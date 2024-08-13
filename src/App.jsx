@@ -1,7 +1,7 @@
 import { Box, Button, Center, Flex, Heading, Image, Input, SimpleGrid, Text, CircularProgress } from "@chakra-ui/react";
 import { Alchemy, Network, Utils } from "alchemy-sdk";
 import { useState } from "react";
-import { ethers } from "ethers";
+import TokenCard from "./TokenCard";
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,7 +15,7 @@ function App() {
     if (!window.ethereum.selectedAddress) {
       await window.ethereum.request({ method: "eth_requestAccounts" });
     }
-    getTokenBalance(window.ethereum.selectedAddress);
+    getTokenBalance(null, window.ethereum.selectedAddress);
   }
 
   async function getTokenBalance(_, queryAddress = userAddress) {
@@ -23,7 +23,7 @@ function App() {
     setIsLoading(true);
     const config = {
       apiKey: import.meta.env.VITE_ALCHEMY_API_KEY,
-      network: Network.ETH_SEPOLIA,
+      network: Network.ETH_MAINNET,
     };
 
     const alchemy = new Alchemy(config);
@@ -66,20 +66,9 @@ function App() {
 
         {hasQueried ? (
           <SimpleGrid w={"90vw"} columns={4} spacing={24}>
-            {results.tokenBalances.map((e, i) => {
-              return (
-                <Flex flexDir={"column"} color="white" bg="blue" w={"20vw"} key={i}>
-                  <Box>
-                    <b>Symbol:</b> ${tokenDataObjects[i].symbol}&nbsp;
-                  </Box>
-                  <Box>
-                    <b>Balance:</b>&nbsp;
-                    {Utils.formatUnits(e.tokenBalance, tokenDataObjects[i].decimals)}
-                  </Box>
-                  <Image src={tokenDataObjects[i].logo} />
-                </Flex>
-              );
-            })}
+            {results.tokenBalances.map((e, i) => (
+              <TokenCard tokenDataObject={tokenDataObjects[i]} token={e} key={i} />
+            ))}
           </SimpleGrid>
         ) : isLoading ? (
           <CircularProgress isIndeterminate />
