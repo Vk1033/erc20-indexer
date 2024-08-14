@@ -12,6 +12,7 @@ function App() {
   const [ifError, setIfError] = useState(false);
 
   async function getWalletTokens() {
+    setHasQueried(false);
     setIsLoading(true);
     if (!window.ethereum.selectedAddress) {
       await window.ethereum.request({ method: "eth_requestAccounts" });
@@ -50,6 +51,7 @@ function App() {
     setTokenDataObjects(await Promise.all(tokenDataPromises));
     setHasQueried(true);
     setIsLoading(false);
+    setIfError(false);
   }
   return (
     <Box w="100vw">
